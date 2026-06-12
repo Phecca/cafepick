@@ -1,722 +1,768 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>카페픽 — 사진 한 장으로 인스타 카피 완성</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>카페픽 — 사진 한 장으로 인스타 카피 완성</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&family=Nanum+Gothic+Coding:wght@400;700&display=swap');
 
-    :root {
-      --bg: #faf8f5;
-      --surface: #ffffff;
-      --ink: #1a1a1a;
-      --ink-light: #6b6b6b;
-      --accent: #c8602a;
-      --accent-soft: #f5ede7;
-      --gold: #c8a96e;
-      --gold-soft: #faf3e8;
-      --border: #e8e2db;
-      --radius: 16px;
-      --radius-sm: 10px;
-    }
+  :root {
+    --espresso: #2b2118;
+    --espresso-soft: #3c2f24;
+    --paper: #f7f0e3;
+    --paper-line: #e1d3bd;
+    --stamp: #d9622b;
+    --stamp-dark: #b84f1f;
+    --ink: #2b2118;
+    --ink-soft: #9c8a76;
+    --sage: #6f7d52;
+  }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      font-family: 'Noto Sans KR', sans-serif;
-      background: var(--bg);
-      color: var(--ink);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+  html, body {
+    background: var(--espresso);
+    color: var(--ink);
+    font-family: 'Noto Sans KR', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
 
-    header {
-      width: 100%;
-      max-width: 480px;
-      padding: 24px 20px 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .logo { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
-    .logo span { color: var(--gold); }
-    .api-status {
-      font-size: 11px; font-weight: 600; padding: 4px 10px;
-      border-radius: 20px; cursor: pointer; transition: all 0.2s;
-    }
-    .api-status.connected { color: #2e7d32; background: #e8f5e9; }
-    .api-status.disconnected { color: var(--accent); background: var(--accent-soft); }
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px 64px;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(217,98,43,0.08) 0%, transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(111,125,82,0.08) 0%, transparent 40%);
+  }
 
-    /* 진행 바 */
-    .progress-wrap { width: 100%; max-width: 480px; padding: 20px 20px 0; }
-    .progress-steps { display: flex; align-items: center; }
-    .step { display: flex; flex-direction: column; align-items: center; flex: 1; }
-    .step-dot {
-      width: 28px; height: 28px; border-radius: 50%; background: #d4cdc6;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 700; color: #fff; transition: all 0.3s; z-index: 1;
-    }
-    .step.active .step-dot { background: var(--gold); transform: scale(1.15); }
-    .step.done .step-dot { background: var(--ink); }
-    .step-label { font-size: 10px; color: var(--ink-light); margin-top: 6px; font-weight: 500; }
-    .step.active .step-label { color: var(--gold); font-weight: 700; }
-    .step.done .step-label { color: var(--ink); }
-    .step-line { flex: 1; height: 2px; background: #d4cdc6; margin-top: -20px; transition: background 0.3s; }
-    .step-line.done { background: var(--ink); }
+  /* ---------- Header ---------- */
+  .topbar {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 22px;
+  }
 
-    main { width: 100%; max-width: 480px; padding: 20px; flex: 1; }
+  .logo {
+    font-family: 'Gaegu', sans-serif;
+    font-weight: 700;
+    font-size: 28px;
+    color: var(--paper);
+    letter-spacing: 1px;
+  }
+  .logo span {
+    color: var(--stamp);
+  }
 
-    .card {
-      background: var(--surface); border-radius: var(--radius);
-      padding: 24px; border: 1px solid var(--border);
-    }
-    .card-eyebrow {
-      font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
-      color: var(--gold); text-transform: uppercase; margin-bottom: 8px;
-    }
-    .card-title {
-      font-size: 22px; font-weight: 700; line-height: 1.4;
-      letter-spacing: -0.3px; margin-bottom: 6px;
-    }
-    .card-desc { font-size: 13px; color: var(--ink-light); margin-bottom: 20px; line-height: 1.6; }
+  .ai-badge {
+    font-family: 'Nanum Gothic Coding', monospace;
+    font-size: 11px;
+    color: var(--espresso);
+    background: var(--sage);
+    border-radius: 20px;
+    padding: 5px 12px;
+    letter-spacing: 0.5px;
+  }
+  .ai-badge.off { background: var(--ink-soft); }
 
-    /* 사진 업로드 */
-    .photo-upload-area {
-      border: 2px dashed var(--border); border-radius: var(--radius-sm);
-      padding: 32px 20px; text-align: center; cursor: pointer;
-      transition: all 0.2s; background: var(--bg); position: relative;
-      min-height: 200px; display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-    }
-    .photo-upload-area:hover { border-color: var(--gold); background: var(--gold-soft); }
-    .photo-upload-area.has-image { border-style: solid; border-color: var(--gold); padding: 0; overflow: hidden; }
-    .photo-upload-area input[type="file"] {
-      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
-    }
-    .upload-icon { font-size: 48px; margin-bottom: 12px; }
-    .upload-title { font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
-    .upload-desc { font-size: 13px; color: var(--ink-light); line-height: 1.6; }
-    .upload-desc b { color: var(--gold); }
-    .preview-img { width: 100%; max-height: 280px; object-fit: cover; display: block; }
-    .change-photo-btn {
-      width: 100%; padding: 10px; background: rgba(0,0,0,0.5); color: #fff;
-      border: none; font-family: inherit; font-size: 13px; font-weight: 600;
-      cursor: pointer;
-    }
+  /* ---------- Stamp Card (progress) ---------- */
+  .stamp-card {
+    width: 100%;
+    max-width: 480px;
+    background: var(--espresso-soft);
+    border: 1.5px dashed rgba(247,240,227,0.18);
+    border-radius: 18px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 22px;
+  }
+  .stamp-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+  }
+  .stamp-circle {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 2px solid rgba(247,240,227,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Gaegu', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: rgba(247,240,227,0.45);
+    transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), opacity 0.3s;
+    position: relative;
+  }
+  .stamp-step.active .stamp-circle,
+  .stamp-step.done .stamp-circle {
+    border: none;
+    background: var(--stamp);
+    color: var(--paper);
+    border-radius: 46% 54% 58% 42% / 56% 44% 56% 44%;
+    transform: rotate(-7deg) scale(1.05);
+    box-shadow: 0 3px 0 rgba(0,0,0,0.18);
+  }
+  .stamp-step.done .stamp-circle::after {
+    content: '✓';
+  }
+  .stamp-step.done .stamp-circle {
+    font-size: 0;
+  }
+  .stamp-step.done .stamp-circle::after {
+    font-size: 20px;
+  }
+  .stamp-label {
+    font-size: 12px;
+    color: rgba(247,240,227,0.55);
+    letter-spacing: 0.5px;
+  }
+  .stamp-step.active .stamp-label,
+  .stamp-step.done .stamp-label {
+    color: var(--paper);
+    font-weight: 700;
+  }
+  .stamp-rule {
+    height: 2px;
+    flex: 0.6;
+    margin: 0 4px 24px;
+    background: repeating-linear-gradient(to right, rgba(247,240,227,0.25) 0 6px, transparent 6px 12px);
+  }
 
-    /* 분석 중 */
-    .analyzing-wrap {
-      display: flex; flex-direction: column; align-items: center;
-      gap: 12px; padding: 24px 0;
-    }
-    .spinner {
-      width: 32px; height: 32px; border: 3px solid var(--border);
-      border-top-color: var(--gold); border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .analyzing-text { font-size: 14px; color: var(--ink-light); }
+  /* ---------- Card panel ---------- */
+  .card {
+    width: 100%;
+    max-width: 480px;
+    background: var(--paper);
+    border-radius: 22px;
+    padding: 28px 24px;
+    box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+    animation: rise 0.4s ease;
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
-    /* AI 분석 결과 태그 */
-    .ai-result-wrap { margin-top: 12px; }
-    .ai-result-label {
-      font-size: 11px; color: var(--gold); font-weight: 700;
-      letter-spacing: 1px; margin-bottom: 8px;
-    }
-    .ai-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-    .ai-tag {
-      font-size: 12px; color: var(--ink); background: var(--gold-soft);
-      border: 1px solid var(--gold); padding: 4px 10px; border-radius: 20px;
-      font-weight: 500;
-    }
+  .eyebrow {
+    font-family: 'Nanum Gothic Coding', monospace;
+    font-size: 12px;
+    color: var(--stamp-dark);
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  h1.title {
+    font-family: 'Gaegu', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+  .desc {
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin-bottom: 22px;
+    line-height: 1.6;
+  }
 
-    /* 톤 선택 */
-    .tone-options { display: flex; flex-direction: column; gap: 10px; }
-    .tone-btn {
-      width: 100%; padding: 16px; border: 1.5px solid var(--border);
-      border-radius: var(--radius-sm); background: var(--bg); text-align: left;
-      cursor: pointer; font-family: inherit; transition: all 0.2s;
-      display: flex; align-items: center; gap: 14px;
-    }
-    .tone-btn:hover { border-color: var(--gold); background: var(--gold-soft); }
-    .tone-btn.selected { border-color: var(--gold); background: var(--gold-soft); }
-    .tone-icon { font-size: 24px; width: 36px; text-align: center; flex-shrink: 0; }
-    .tone-title { font-size: 14px; font-weight: 700; color: var(--ink); display: block; }
-    .tone-desc { font-size: 12px; color: var(--ink-light); margin-top: 2px; display: block; }
+  /* ---------- Upload zone ---------- */
+  .upload-zone {
+    border: 2px dashed var(--paper-line);
+    border-radius: 16px;
+    padding: 40px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: #fffdf8;
+  }
+  .upload-zone:hover, .upload-zone.drag {
+    border-color: var(--stamp);
+    background: #fff8ef;
+  }
+  .upload-zone .icon { font-size: 38px; display: block; margin-bottom: 10px; }
+  .upload-zone .main-txt { font-weight: 700; font-size: 16px; margin-bottom: 4px; }
+  .upload-zone .sub-txt { font-size: 13px; color: var(--ink-soft); }
+  .upload-zone .hint { font-size: 12px; color: var(--sage); margin-top: 8px; font-weight: 700; }
 
-    /* 버튼 */
-    .btn-primary {
-      width: 100%; margin-top: 20px; padding: 16px; background: var(--ink);
-      color: #fff; border: none; border-radius: var(--radius-sm); font-family: inherit;
-      font-size: 15px; font-weight: 700; cursor: pointer; transition: opacity 0.2s;
-    }
-    .btn-primary:hover { opacity: 0.85; }
-    .btn-primary:disabled { background: #d4cdc6; cursor: not-allowed; }
-    .btn-gold {
-      width: 100%; margin-top: 20px; padding: 16px; background: var(--gold);
-      color: #fff; border: none; border-radius: var(--radius-sm); font-family: inherit;
-      font-size: 15px; font-weight: 700; cursor: pointer; transition: opacity 0.2s;
-    }
-    .btn-gold:hover { opacity: 0.88; }
-    .btn-outline {
-      width: 100%; margin-top: 10px; padding: 14px; background: transparent;
-      border: 1.5px solid var(--border); border-radius: var(--radius-sm);
-      font-family: inherit; font-size: 14px; font-weight: 600;
-      color: var(--ink-light); cursor: pointer; transition: all 0.2s;
-    }
-    .btn-outline:hover { border-color: var(--ink); color: var(--ink); }
+  #fileInput { display: none; }
 
-    /* 로딩 */
-    .loading-wrap {
-      display: flex; flex-direction: column; align-items: center;
-      gap: 16px; padding: 48px 0;
-    }
-    .loading-text { font-size: 15px; color: var(--ink-light); font-weight: 500; }
-    .loading-sub { font-size: 12px; color: #bbb; }
+  .preview-wrap {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--paper-line);
+  }
+  .preview-wrap img {
+    width: 100%;
+    display: block;
+    max-height: 280px;
+    object-fit: cover;
+  }
+  .preview-tag {
+    position: absolute;
+    top: 10px; left: 10px;
+    background: var(--stamp);
+    color: var(--paper);
+    font-family: 'Nanum Gothic Coding', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    transform: rotate(-4deg);
+  }
 
-    /* 결과 */
-    .result-intro {
-      font-size: 12px; color: var(--ink-light); margin-bottom: 16px;
-      line-height: 1.6; padding: 10px 12px; background: var(--bg);
-      border-radius: var(--radius-sm); border: 1px solid var(--border);
-    }
-    .result-intro b { color: var(--gold); }
-    .result-cards { display: flex; flex-direction: column; gap: 14px; }
-    .result-card {
-      background: var(--bg); border: 1.5px solid var(--border);
-      border-radius: var(--radius-sm); padding: 16px;
-    }
-    .result-card-label {
-      font-size: 10px; font-weight: 700; letter-spacing: 1px;
-      color: var(--gold); text-transform: uppercase; margin-bottom: 10px;
-    }
-    .result-text {
-      font-size: 14px; line-height: 1.9; color: var(--ink);
-      white-space: pre-line; word-break: keep-all;
-    }
-    .copy-btn {
-      width: 100%; margin-top: 12px; padding: 10px; background: var(--surface);
-      border: 1.5px solid var(--border); border-radius: var(--radius-sm);
-      font-family: inherit; font-size: 13px; font-weight: 600; color: var(--ink);
-      cursor: pointer; transition: all 0.2s;
-      display: flex; align-items: center; justify-content: center; gap: 6px;
-    }
-    .copy-btn:hover { border-color: var(--gold); color: var(--gold); }
-    .copy-btn.copied { background: var(--gold-soft); border-color: var(--gold); color: var(--gold); }
+  /* ---------- Buttons ---------- */
+  .btn {
+    width: 100%;
+    border: none;
+    border-radius: 14px;
+    padding: 15px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: transform 0.12s, opacity 0.2s, background 0.2s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary {
+    background: var(--espresso);
+    color: var(--paper);
+    margin-top: 18px;
+  }
+  .btn-primary:disabled {
+    background: var(--paper-line);
+    color: var(--ink-soft);
+    cursor: not-allowed;
+  }
+  .btn-ghost {
+    background: transparent;
+    border: 1.5px solid var(--paper-line);
+    color: var(--ink-soft);
+    margin-top: 10px;
+  }
+  .btn-ghost:hover { border-color: var(--stamp); color: var(--stamp-dark); }
 
-    .ai-notice { font-size: 11px; color: #bbb; text-align: center; margin-top: 14px; }
+  /* ---------- Mood chips (step 2) ---------- */
+  .mood-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .mood-chip {
+    border: 1.5px solid var(--paper-line);
+    background: #fffdf8;
+    border-radius: 14px;
+    padding: 16px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .mood-chip .emoji { font-size: 26px; display: block; margin-bottom: 6px; }
+  .mood-chip .name { font-weight: 700; font-size: 14px; }
+  .mood-chip .sub { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+  .mood-chip:hover { border-color: var(--stamp); }
+  .mood-chip.selected {
+    border-color: var(--stamp);
+    background: #fff3e9;
+    box-shadow: 0 0 0 2px rgba(217,98,43,0.18) inset;
+  }
 
-    footer {
-      width: 100%; max-width: 480px; padding: 16px 20px 32px;
-      text-align: center; font-size: 11px; color: #ccc;
-    }
+  /* ---------- Receipt (step 3) ---------- */
+  .receipt {
+    font-family: 'Nanum Gothic Coding', monospace;
+  }
+  .receipt-head {
+    text-align: center;
+    border-bottom: 2px dashed var(--paper-line);
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+  }
+  .receipt-head .r-logo {
+    font-family: 'Gaegu', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+  }
+  .receipt-head .r-meta {
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
 
-    .hidden { display: none !important; }
-    .screen { animation: fadeIn 0.3s ease; }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+  .ticket {
+    border: 1px solid var(--paper-line);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+    background: #fffdf8;
+  }
+  .ticket-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--stamp-dark);
+    font-weight: 700;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+  }
+  .ticket-text {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    line-height: 1.85;
+    white-space: pre-wrap;
+    margin-bottom: 10px;
+  }
+  .ticket-tags {
+    font-size: 12px;
+    color: var(--sage);
+    margin-bottom: 12px;
+    word-break: break-all;
+    line-height: 1.6;
+  }
+  .copy-btn {
+    width: 100%;
+    border: 1.5px solid var(--ink);
+    background: transparent;
+    color: var(--ink);
+    border-radius: 10px;
+    padding: 9px;
+    font-family: 'Nanum Gothic Coding', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 1px;
+  }
+  .copy-btn:hover { background: var(--ink); color: var(--paper); }
+  .copy-btn.copied { background: var(--sage); border-color: var(--sage); color: var(--paper); }
 
-    /* API 모달 */
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 999; padding: 20px;
-    }
-    .modal-box {
-      background: var(--surface); border-radius: var(--radius);
-      padding: 28px 24px; width: 100%; max-width: 400px;
-    }
-    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
-    .modal-desc { font-size: 13px; color: var(--ink-light); line-height: 1.6; margin-bottom: 20px; }
-    .modal-desc a { color: var(--gold); text-decoration: none; }
-    .api-input-wrap { position: relative; }
-    .api-input {
-      width: 100%; padding: 14px 44px 14px 16px; border: 1.5px solid var(--border);
-      border-radius: var(--radius-sm); font-family: inherit; font-size: 14px;
-      background: var(--bg); color: var(--ink); outline: none; transition: border-color 0.2s;
-    }
-    .api-input:focus { border-color: var(--gold); }
-    .toggle-eye {
-      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-      background: none; border: none; cursor: pointer; font-size: 16px;
-    }
-    .modal-warn {
-      font-size: 11px; color: var(--ink-light); margin-top: 10px;
-      background: var(--gold-soft); padding: 8px 12px; border-radius: var(--radius-sm);
-      line-height: 1.5;
-    }
-  </style>
+  .tear-line {
+    height: 14px;
+    margin: 18px 0;
+    background-image: radial-gradient(circle at 7px 7px, var(--espresso) 0, var(--espresso) 4px, transparent 4.5px);
+    background-size: 14px 14px;
+    background-repeat: repeat-x;
+    background-position: center;
+    border-radius: 0 0 12px 12px;
+    position: relative;
+  }
+  .tear-line::before, .tear-line::after {
+    content: '';
+    position: absolute;
+    top: -8px;
+    width: 16px; height: 16px;
+    background: var(--espresso);
+    border-radius: 50%;
+  }
+  .tear-line::before { left: -32px; }
+  .tear-line::after { right: -32px; }
+
+  .receipt-foot {
+    text-align: center;
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 6px;
+    letter-spacing: 1px;
+  }
+
+  /* ---------- Loading ---------- */
+  .loading-wrap {
+    text-align: center;
+    padding: 50px 10px;
+  }
+  .cup {
+    font-size: 44px;
+    display: inline-block;
+    animation: steam 1.6s ease-in-out infinite;
+  }
+  @keyframes steam {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-6px) rotate(-4deg); }
+  }
+  .loading-txt {
+    margin-top: 16px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--ink-soft);
+    font-family: 'Gaegu', sans-serif;
+    font-size: 18px;
+  }
+
+  /* ---------- Error ---------- */
+  .error-box {
+    border: 1.5px solid var(--stamp);
+    background: #fff3e9;
+    border-radius: 14px;
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--stamp-dark);
+    margin-bottom: 14px;
+  }
+  .error-box b { display: block; margin-bottom: 6px; font-size: 14px; }
+
+  footer {
+    margin-top: 26px;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(247,240,227,0.4);
+    font-family: 'Gaegu', sans-serif;
+  }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 380px) {
+    .stamp-label { font-size: 10px; }
+    .mood-chip .emoji { font-size: 22px; }
+  }
+</style>
 </head>
 <body>
 
-<!-- API 키 모달 -->
-<div class="modal-overlay" id="apiModal">
-  <div class="modal-box">
-    <div class="modal-title">🔑 API 키 입력</div>
-    <div class="modal-desc">
-      Anthropic API 키를 입력하면 AI 카피가 생성돼요.<br>
-      <a href="https://console.anthropic.com" target="_blank">→ console.anthropic.com 에서 발급</a>
-    </div>
-    <div class="api-input-wrap">
-      <input class="api-input" id="apiKeyInput" type="password"
-        placeholder="sk-ant-api03-..." oninput="onApiKeyInput()" />
-      <button class="toggle-eye" onclick="toggleEye()">👁</button>
-    </div>
-    <div class="modal-warn">⚠️ 키는 이 브라우저 탭에서만 사용돼요. 닫으면 사라져요.</div>
-    <button class="btn-primary" id="btnConfirmKey" onclick="confirmApiKey()" disabled
-      style="margin-top:16px">저장하고 시작하기</button>
+  <div class="topbar">
+    <div class="logo">카페<span>픽</span></div>
+    <div class="ai-badge" id="aiBadge">● AI 연결됨</div>
   </div>
-</div>
 
-<header>
-  <div class="logo">카페<span>픽</span></div>
-  <div id="apiStatusBadge" class="api-status disconnected"
-    onclick="document.getElementById('apiModal').style.display='flex'">🔑 키 입력</div>
-</header>
-
-<div class="progress-wrap">
-  <div class="progress-steps">
-    <div class="step active" id="step1">
-      <div class="step-dot">1</div>
-      <div class="step-label">사진</div>
+  <div class="stamp-card">
+    <div class="stamp-step active" id="stampStep1">
+      <div class="stamp-circle">1</div>
+      <div class="stamp-label">사진</div>
     </div>
-    <div class="step-line" id="line1"></div>
-    <div class="step" id="step2">
-      <div class="step-dot">2</div>
-      <div class="step-label">분위기</div>
+    <div class="stamp-rule"></div>
+    <div class="stamp-step" id="stampStep2">
+      <div class="stamp-circle">2</div>
+      <div class="stamp-label">분위기</div>
     </div>
-    <div class="step-line" id="line2"></div>
-    <div class="step" id="step3">
-      <div class="step-dot">✓</div>
-      <div class="step-label">완성</div>
+    <div class="stamp-rule"></div>
+    <div class="stamp-step" id="stampStep3">
+      <div class="stamp-circle">3</div>
+      <div class="stamp-label">완성</div>
     </div>
   </div>
-</div>
 
-<main>
+  <!-- STEP 1 : 사진 업로드 -->
+  <div class="card" id="step1">
+    <div class="eyebrow">STEP 1</div>
+    <h1 class="title">오늘의 사진을 올려주세요</h1>
+    <p class="desc">메뉴, 음료, 매장 공간 — 어떤 사진이든 좋아요.<br>AI가 사진을 보고 분위기를 분석할게요.</p>
 
-  <!-- STEP 1: 사진 업로드 -->
-  <div class="card screen" id="screen1">
-    <div class="card-eyebrow">Step 1</div>
-    <div class="card-title">사진을 올려주세요</div>
-    <div class="card-desc">AI가 사진을 보고 메뉴와 분위기를 자동으로 읽어요</div>
+    <div class="upload-zone" id="uploadZone">
+      <span class="icon">📷</span>
+      <div class="main-txt">사진 올리기</div>
+      <div class="sub-txt">탭하거나 끌어다 놓아주세요</div>
+      <div class="hint">어떤 사진이든 OK</div>
+    </div>
+    <input type="file" id="fileInput" accept="image/*">
 
-    <div class="photo-upload-area" id="uploadArea">
-      <input type="file" id="photoInput" accept="image/*" onchange="handlePhoto(event)" />
-      <div id="uploadPlaceholder">
-        <div class="upload-icon">📸</div>
-        <div class="upload-title">사진 올리기</div>
-        <div class="upload-desc">
-          카페 메뉴, 매장 공간, 오늘의 음료<br>
-          <b>어떤 사진이든 OK</b>
-        </div>
+    <div class="preview-wrap hidden" id="previewWrap">
+      <span class="preview-tag">미리보기</span>
+      <img id="previewImg" alt="업로드한 사진">
+    </div>
+
+    <button class="btn btn-ghost hidden" id="changePhotoBtn">다른 사진으로 바꾸기</button>
+    <button class="btn btn-primary" id="toStep2Btn" disabled>다음 — 분위기 선택</button>
+  </div>
+
+  <!-- STEP 2 : 분위기 선택 -->
+  <div class="card hidden" id="step2">
+    <div class="eyebrow">STEP 2</div>
+    <h1 class="title">오늘은 어떤 분위기로 쓸까요?</h1>
+    <p class="desc">고른 분위기에 맞춰 카피 3가지를 만들어드려요.</p>
+
+    <div class="mood-grid" id="moodGrid">
+      <div class="mood-chip" data-mood="잔잔하게">
+        <span class="emoji">🌙</span>
+        <div class="name">잔잔하게</div>
+        <div class="sub">조용하고 차분한 톤</div>
       </div>
-      <img id="previewImg" class="preview-img hidden" alt="업로드 사진" />
+      <div class="mood-chip" data-mood="활기차게">
+        <span class="emoji">☀️</span>
+        <div class="name">활기차게</div>
+        <div class="sub">밝고 신나는 톤</div>
+      </div>
+      <div class="mood-chip" data-mood="담백하게">
+        <span class="emoji">🤍</span>
+        <div class="name">담백하게</div>
+        <div class="sub">짧고 깔끔한 톤</div>
+      </div>
+      <div class="mood-chip" data-mood="감성적으로">
+        <span class="emoji">🍂</span>
+        <div class="name">감성적으로</div>
+        <div class="sub">사색적인 톤</div>
+      </div>
+      <div class="mood-chip" data-mood="친근하게">
+        <span class="emoji">🧡</span>
+        <div class="name">친근하게</div>
+        <div class="sub">다정한 반말 톤</div>
+      </div>
+      <div class="mood-chip" data-mood="고급스럽게">
+        <span class="emoji">✨</span>
+        <div class="name">고급스럽게</div>
+        <div class="sub">정중한 존댓말 톤</div>
+      </div>
     </div>
 
-    <!-- 분석 중 -->
-    <div id="analyzingWrap" class="analyzing-wrap hidden">
-      <div class="spinner"></div>
-      <div class="analyzing-text">📷 사진 분석 중...</div>
-    </div>
-
-    <!-- AI 분석 결과 -->
-    <div id="aiResultWrap" class="ai-result-wrap hidden">
-      <div class="ai-result-label">✨ AI 분석 완료 — 이런 내용이 보여요</div>
-      <div class="ai-tags" id="aiTags"></div>
-    </div>
-
-    <button class="change-photo-btn hidden" id="changeBtn" onclick="changePhoto()"
-      style="margin-top:10px; border-radius:8px; background:var(--bg); color:var(--ink-light); border:1.5px solid var(--border);">
-      📷 다른 사진으로 바꾸기
-    </button>
-
-    <button class="btn-primary" id="next1" onclick="goStep(2)" disabled>다음 — 분위기 선택</button>
+    <button class="btn btn-primary" id="toStep3Btn" disabled>카피 만들기</button>
+    <button class="btn btn-ghost" id="backToStep1Btn">← 사진 다시 선택</button>
   </div>
 
-  <!-- STEP 2: 분위기 선택 -->
-  <div class="card screen hidden" id="screen2">
-    <div class="card-eyebrow">Step 2</div>
-    <div class="card-title">우리 카페 분위기가<br>어느 쪽에 가깝나요?</div>
-    <div class="tone-options">
-      <button class="tone-btn" onclick="selectTone('성수·한남', this)">
-        <div class="tone-icon">🖤</div>
-        <div>
-          <span class="tone-title">성수 · 한남동 스타일</span>
-          <span class="tone-desc">힙하고 시니컬함. 무심하고 쿨한 말투</span>
+  <!-- STEP 3 : 결과 -->
+  <div class="card hidden" id="step3">
+
+    <div id="loadingBlock" class="loading-wrap">
+      <span class="cup">☕</span>
+      <div class="loading-txt">카피 내리는 중...</div>
+    </div>
+
+    <div id="resultBlock" class="hidden">
+      <div class="receipt">
+        <div class="receipt-head">
+          <div class="r-logo">카페픽 영수증</div>
+          <div class="r-meta" id="receiptMeta">사진 분석 완료</div>
         </div>
-      </button>
-      <button class="tone-btn" onclick="selectTone('연남·망원', this)">
-        <div class="tone-icon">🌿</div>
-        <div>
-          <span class="tone-title">연남 · 망원동 스타일</span>
-          <span class="tone-desc">다정하고 따뜻함. 소소한 이야기체</span>
-        </div>
-      </button>
-      <button class="tone-btn" onclick="selectTone('교외·여유', this)">
-        <div class="tone-icon">🌾</div>
-        <div>
-          <span class="tone-title">교외 · 드라이브 코스 스타일</span>
-          <span class="tone-desc">차분하고 여유로움. 공간과 자연 묘사</span>
-        </div>
-      </button>
+        <div id="ticketsWrap"></div>
+        <div class="tear-line"></div>
+        <div class="receipt-foot">✂ 마음에 드는 카피를 복사해서 쓰세요</div>
+      </div>
+
+      <button class="btn btn-primary" id="regenBtn">다시 만들기</button>
+      <button class="btn btn-ghost" id="restartBtn">처음으로</button>
     </div>
-    <button class="btn-primary" id="next2" onclick="generateCopy(false)" disabled>카피 만들기</button>
-  </div>
 
-  <!-- 로딩 -->
-  <div class="card screen hidden" id="screenLoading">
-    <div class="loading-wrap">
-      <div class="spinner" style="width:40px;height:40px;border-width:3px;border-top-color:var(--gold)"></div>
-      <div class="loading-text" id="loadingText">카피 만드는 중...</div>
-      <div class="loading-sub" id="loadingSub">사진 보고 감성 카피 뽑는 중이에요</div>
+    <div id="errorBlock" class="hidden">
+      <div class="error-box">
+        <b>카피를 만들지 못했어요</b>
+        <span id="errorMsg"></span>
+      </div>
+      <button class="btn btn-primary" id="retryBtn">다시 시도</button>
+      <button class="btn btn-ghost" id="errorRestartBtn">처음으로</button>
     </div>
+
   </div>
 
-  <!-- STEP 3: 결과 -->
-  <div class="card screen hidden" id="screen3">
-    <div class="card-eyebrow">완성</div>
-    <div class="card-title">3가지 버전 골라서<br>바로 쓰세요</div>
-    <div class="result-intro" id="resultIntro"></div>
-    <div class="result-cards" id="resultCards"></div>
-    <button class="btn-gold" onclick="generateCopy(true)">🔄 다시 만들기</button>
-    <button class="btn-outline" onclick="resetAll()">↩ 처음부터 다시</button>
-    <div class="ai-notice">* AI가 생성한 콘텐츠입니다</div>
-  </div>
-
-</main>
-
-<footer>카페픽 · 감성 카페 인스타 AI</footer>
+  <footer>카페픽 · 감성 카페 인스타 AI</footer>
 
 <script>
   const state = {
-    apiKey: '',
-    photoBase64: '',
-    photoMime: 'image/jpeg',
-    aiKeywords: '',
-    tone: '',
-    pendingAnalysis: false
+    imageData: null,   // { base64, mediaType }
+    mood: null
   };
 
-  // ── API 키 ──
-  function onApiKeyInput() {
-    const val = document.getElementById('apiKeyInput').value.trim();
-    document.getElementById('btnConfirmKey').disabled = !val.startsWith('sk-ant');
-  }
-  function toggleEye() {
-    const input = document.getElementById('apiKeyInput');
-    input.type = input.type === 'password' ? 'text' : 'password';
-  }
-  async function confirmApiKey() {
-    const key = document.getElementById('apiKeyInput').value.trim();
-    if (!key) return;
-    state.apiKey = key;
-    document.getElementById('apiModal').style.display = 'none';
-    const badge = document.getElementById('apiStatusBadge');
-    badge.textContent = '✅ AI 연결됨';
-    badge.className = 'api-status connected';
+  const els = {
+    uploadZone: document.getElementById('uploadZone'),
+    fileInput: document.getElementById('fileInput'),
+    previewWrap: document.getElementById('previewWrap'),
+    previewImg: document.getElementById('previewImg'),
+    changePhotoBtn: document.getElementById('changePhotoBtn'),
+    toStep2Btn: document.getElementById('toStep2Btn'),
+    toStep3Btn: document.getElementById('toStep3Btn'),
+    backToStep1Btn: document.getElementById('backToStep1Btn'),
+    moodGrid: document.getElementById('moodGrid'),
+    step1: document.getElementById('step1'),
+    step2: document.getElementById('step2'),
+    step3: document.getElementById('step3'),
+    stampStep1: document.getElementById('stampStep1'),
+    stampStep2: document.getElementById('stampStep2'),
+    stampStep3: document.getElementById('stampStep3'),
+    loadingBlock: document.getElementById('loadingBlock'),
+    resultBlock: document.getElementById('resultBlock'),
+    errorBlock: document.getElementById('errorBlock'),
+    errorMsg: document.getElementById('errorMsg'),
+    ticketsWrap: document.getElementById('ticketsWrap'),
+    receiptMeta: document.getElementById('receiptMeta'),
+    regenBtn: document.getElementById('regenBtn'),
+    restartBtn: document.getElementById('restartBtn'),
+    retryBtn: document.getElementById('retryBtn'),
+    errorRestartBtn: document.getElementById('errorRestartBtn'),
+  };
 
-    // 사진이 이미 올라와 있으면 바로 분석 시작
-    if (state.pendingAnalysis && state.photoBase64) {
-      state.pendingAnalysis = false;
-      await analyzePhoto();
-    }
-  }
-  function checkApiKey() {
-    if (!state.apiKey) {
-      document.getElementById('apiModal').style.display = 'flex';
-      return false;
-    }
-    return true;
-  }
+  // ---------- 이미지 업로드 & 리사이즈 ----------
+  els.uploadZone.addEventListener('click', () => els.fileInput.click());
 
-  // ── 사진 업로드 ──
-  function handlePhoto(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    state.photoMime = file.type || 'image/jpeg';
-
-    const reader = new FileReader();
-    reader.onload = async (ev) => {
-      const base64full = ev.target.result;
-      state.photoBase64 = base64full.split(',')[1];
-
-      // 미리보기
-      const preview = document.getElementById('previewImg');
-      preview.src = base64full;
-      preview.classList.remove('hidden');
-      document.getElementById('uploadPlaceholder').classList.add('hidden');
-      document.getElementById('uploadArea').classList.add('has-image');
-      document.getElementById('changeBtn').classList.remove('hidden');
-
-      // API 키 있으면 바로 분석, 없으면 모달 띄우고 키 입력 후 분석
-      if (state.apiKey) {
-        await analyzePhoto();
-      } else {
-        document.getElementById('apiModal').style.display = 'flex';
-        // 키 입력 후 확인 버튼 누르면 분석 시작하도록 플래그
-        state.pendingAnalysis = true;
-        document.getElementById('next1').disabled = false;
+  ['dragover','dragleave','drop'].forEach(evt => {
+    els.uploadZone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      if (evt === 'dragover') els.uploadZone.classList.add('drag');
+      if (evt === 'dragleave') els.uploadZone.classList.remove('drag');
+      if (evt === 'drop') {
+        els.uploadZone.classList.remove('drag');
+        const file = e.dataTransfer.files[0];
+        if (file) handleFile(file);
       }
+    });
+  });
+
+  els.fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) handleFile(file);
+  });
+
+  els.changePhotoBtn.addEventListener('click', () => els.fileInput.click());
+
+  function handleFile(file) {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1024;
+        let { width, height } = img;
+        if (width > height && width > MAX) { height = Math.round(height * MAX / width); width = MAX; }
+        else if (height > MAX) { width = Math.round(width * MAX / height); height = MAX; }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+        const base64 = dataUrl.split(',')[1];
+
+        state.imageData = { base64, mediaType: 'image/jpeg' };
+
+        els.previewImg.src = dataUrl;
+        els.previewWrap.classList.remove('hidden');
+        els.uploadZone.classList.add('hidden');
+        els.changePhotoBtn.classList.remove('hidden');
+        els.toStep2Btn.disabled = false;
+      };
+      img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   }
 
-  async function analyzePhoto() {
-    document.getElementById('analyzingWrap').classList.remove('hidden');
-    document.getElementById('aiResultWrap').classList.add('hidden');
-    document.getElementById('next1').disabled = true;
+  // ---------- 화면 전환 ----------
+  function goToStep(n) {
+    [els.step1, els.step2, els.step3].forEach((s, i) => {
+      s.classList.toggle('hidden', i !== n - 1);
+    });
+    [els.stampStep1, els.stampStep2, els.stampStep3].forEach((s, i) => {
+      s.classList.remove('active', 'done');
+      if (i + 1 < n) s.classList.add('done');
+      if (i + 1 === n) s.classList.add('active');
+    });
+  }
+
+  els.toStep2Btn.addEventListener('click', () => goToStep(2));
+  els.backToStep1Btn.addEventListener('click', () => goToStep(1));
+
+  // ---------- 분위기 선택 ----------
+  els.moodGrid.addEventListener('click', (e) => {
+    const chip = e.target.closest('.mood-chip');
+    if (!chip) return;
+    document.querySelectorAll('.mood-chip').forEach(c => c.classList.remove('selected'));
+    chip.classList.add('selected');
+    state.mood = chip.dataset.mood;
+    els.toStep3Btn.disabled = false;
+  });
+
+  els.toStep3Btn.addEventListener('click', () => {
+    goToStep(3);
+    generateCopy();
+  });
+
+  // ---------- API 호출 ----------
+  async function generateCopy() {
+    els.loadingBlock.classList.remove('hidden');
+    els.resultBlock.classList.add('hidden');
+    els.errorBlock.classList.add('hidden');
 
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/api/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': state.apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 150,
-          messages: [{
-            role: 'user',
-            content: [
-              { type: 'image', source: { type: 'base64', media_type: state.photoMime, data: state.photoBase64 } },
-              { type: 'text', text: '이 카페 사진에서 보이는 것들을 짧은 키워드로 5개 이내로 뽑아줘. 메뉴명, 재료, 분위기, 계절감 위주로. 한국어로. 쉼표로 구분. 예: 딸기 타르트, 크림치즈, 따뜻한 조명, 우드 테이블. 설명 없이 키워드만.' }
-            ]
-          }]
+          image: state.imageData.base64,
+          mediaType: state.imageData.mediaType,
+          mood: state.mood,
+          seed: Math.random().toString(36).slice(2)
         })
       });
-      const data = await res.json();
-      const keywords = data.content?.[0]?.text?.trim() || '';
 
-      if (keywords) {
-        state.aiKeywords = keywords;
-        // 태그 표시
-        const tags = keywords.split(',').map(k => k.trim()).filter(Boolean);
-        const tagWrap = document.getElementById('aiTags');
-        tagWrap.innerHTML = tags.map(t => `<span class="ai-tag">${t}</span>`).join('');
-        document.getElementById('aiResultWrap').classList.remove('hidden');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `서버 오류 (${res.status})`);
       }
-    } catch(e) {
-      state.aiKeywords = '카페 메뉴';
-    } finally {
-      document.getElementById('analyzingWrap').classList.add('hidden');
-      document.getElementById('next1').disabled = false;
-    }
-  }
 
-  function changePhoto() {
-    document.getElementById('photoInput').click();
-  }
-
-  // ── 톤 선택 ──
-  function selectTone(tone, btn) {
-    state.tone = tone;
-    document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    document.getElementById('next2').disabled = false;
-  }
-
-  // ── 스텝 이동 ──
-  function goStep(step) {
-    ['screen1','screen2','screen3','screenLoading'].forEach(s =>
-      document.getElementById(s).classList.add('hidden'));
-
-    for (let i = 1; i <= 3; i++) {
-      const el = document.getElementById('step' + i);
-      if (!el) continue;
-      el.classList.remove('active','done');
-      if (i < step) { el.classList.add('done'); el.querySelector('.step-dot').textContent = '✓'; }
-      else if (i === step) el.classList.add('active');
-      else el.querySelector('.step-dot').textContent = i === 3 ? '✓' : i;
-    }
-    for (let i = 1; i <= 2; i++) {
-      const line = document.getElementById('line' + i);
-      if (line) line.classList.toggle('done', i < step);
-    }
-    document.getElementById('screen' + step).classList.remove('hidden');
-  }
-
-  // ── 카피 생성 ──
-  async function generateCopy(isRegenerate) {
-    if (!checkApiKey()) return;
-
-    ['screen1','screen2','screen3'].forEach(s =>
-      document.getElementById(s).classList.add('hidden'));
-    document.getElementById('screenLoading').classList.remove('hidden');
-
-    if (isRegenerate) {
-      document.getElementById('loadingText').textContent = '새 버전 만드는 중...';
-      document.getElementById('loadingSub').textContent = '같은 사진, 다른 느낌으로';
-    } else {
-      document.getElementById('loadingText').textContent = '카피 만드는 중...';
-      document.getElementById('loadingSub').textContent = '사진 보고 감성 카피 뽑는 중이에요';
-    }
-
-    // 스텝 완성 표시
-    for (let i = 1; i <= 3; i++) {
-      const el = document.getElementById('step' + i);
-      if (!el) continue;
-      el.classList.remove('active','done');
-      if (i < 3) { el.classList.add('done'); el.querySelector('.step-dot').textContent = '✓'; }
-      else el.classList.add('active');
-    }
-    document.getElementById('line1').classList.add('done');
-    document.getElementById('line2').classList.add('done');
-
-    const toneMap = {
-      '성수·한남': '힙하고 시니컬한 톤. 짧고 무심하게. "안녕하세요" 절대 금지.',
-      '연남·망원': '다정하고 따뜻한 톤. 소소한 이야기체. 진부한 문구 금지.',
-      '교외·여유': '차분하고 느린 톤. 공간과 자연 묘사. 여백 있게.'
-    };
-
-    const regenSeeds = [
-      '시작 문장을 질문형으로.',
-      '날씨나 계절 묘사로 시작.',
-      '시간 표현을 첫 줄에. 예: 오후 2시',
-      '단골 이야기로 시작.',
-      '한 단어로 첫 줄 시작.',
-    ];
-    const seed = isRegenerate ? `\n💡 이번 힌트: ${regenSeeds[Math.floor(Math.random()*regenSeeds.length)]}` : '';
-
-    const promptText = `너는 한국 감성 카페 인스타 카피라이터야.
-아래 사진과 조건으로 인스타 게시물 카피를 3가지 버전으로 만들어줘.${seed}
-
-[조건]
-- 분위기: ${state.tone} → ${toneMap[state.tone]}
-- 사진 분석 키워드: ${state.aiKeywords || '카페 메뉴'}
-
-[절대 금지]
-- "안녕하세요!", "~랍니다!", "~해보세요!", "오늘도 좋은 하루"
-- ☕✨🌟💕 같은 진부한 이모지 조합
-
-[형식]
-- 본문 3~4줄, 무심하게 끊어 쓰기
-- 줄 사이 빈 줄(.) 삽입
-- 해시태그는 ".\\n.\\n.\\n" 3번 후 하단에 5~8개
-- #카페 #카페스타그램 포함
-
-[출력] JSON 배열만. 다른 말 없이.
-[
-  {"label":"버전 A","copy":"카피\\n.\\n카피2\\n.\\n.\\n.\\n#해시태그"},
-  {"label":"버전 B","copy":"..."},
-  {"label":"버전 C","copy":"..."}
-]`;
-
-    try {
-      const content = state.photoBase64 ? [
-        { type: 'image', source: { type: 'base64', media_type: state.photoMime, data: state.photoBase64 } },
-        { type: 'text', text: promptText }
-      ] : [{ type: 'text', text: promptText }];
-
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': state.apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          messages: [{ role: 'user', content }]
-        })
-      });
       const data = await res.json();
-      const raw = data.content?.[0]?.text || '';
-      renderResult(raw);
-    } catch(e) {
-      renderResult(JSON.stringify(getFallback()));
+      renderResult(data);
+
+    } catch (err) {
+      showError(err.message || '알 수 없는 오류가 발생했어요.');
+    } finally {
+      els.loadingBlock.classList.add('hidden');
     }
   }
 
-  function renderResult(raw) {
-    document.getElementById('screenLoading').classList.add('hidden');
-    document.getElementById('screen3').classList.remove('hidden');
+  function renderResult(data) {
+    els.receiptMeta.textContent = `사진 분석 완료 · ${state.mood}`;
+    els.ticketsWrap.innerHTML = '';
 
-    let copies = [];
-    try {
-      copies = JSON.parse(raw.replace(/```json|```/g,'').trim());
-    } catch { copies = getFallback(); }
+    const labels = ['버전 A', '버전 B', '버전 C'];
 
-    const intro = `📸 사진 분석 완료 · ${state.tone}\n${state.aiKeywords ? state.aiKeywords : ''}`;
-    document.getElementById('resultIntro').innerHTML =
-      intro.replace(/\n/g,'<br>').replace(state.aiKeywords,`<b>${state.aiKeywords}</b>`);
+    (data.versions || []).forEach((v, i) => {
+      const tags = (v.hashtags || []).map(t => t.startsWith('#') ? t : '#' + t).join(' ');
 
-    const container = document.getElementById('resultCards');
-    container.innerHTML = '';
-    copies.forEach((item, i) => {
-      const card = document.createElement('div');
-      card.className = 'result-card';
-      const copyText = item.copy || item;
-      card.innerHTML = `
-        <div class="result-card-label">${item.label || '버전 '+(i+1)}</div>
-        <div class="result-text">${escapeHtml(copyText)}</div>
-        <button class="copy-btn" onclick="doCopy(this, \`${escapeTick(copyText)}\`)">
-          📋 복사하기
-        </button>`;
-      container.appendChild(card);
+      const ticket = document.createElement('div');
+      ticket.className = 'ticket';
+      ticket.innerHTML = `
+        <div class="ticket-label"><span>${labels[i] || `버전 ${i+1}`}</span><span>${v.tone || ''}</span></div>
+        <div class="ticket-text">${escapeHtml(v.text || '')}</div>
+        <div class="ticket-tags">${escapeHtml(tags)}</div>
+        <button class="copy-btn">📋 복사하기</button>
+      `;
+
+      const copyBtn = ticket.querySelector('.copy-btn');
+      copyBtn.addEventListener('click', () => {
+        const fullText = `${v.text || ''}\n\n${tags}`;
+        navigator.clipboard.writeText(fullText).then(() => {
+          copyBtn.textContent = '✓ 복사 완료';
+          copyBtn.classList.add('copied');
+          setTimeout(() => {
+            copyBtn.textContent = '📋 복사하기';
+            copyBtn.classList.remove('copied');
+          }, 1800);
+        });
+      });
+
+      els.ticketsWrap.appendChild(ticket);
     });
-  }
 
-  function doCopy(btn, text) {
-    navigator.clipboard.writeText(text).then(() => {
-      btn.textContent = '✓ 복사됐어요';
-      btn.classList.add('copied');
-      setTimeout(() => {
-        btn.textContent = '📋 복사하기';
-        btn.classList.remove('copied');
-      }, 2000);
-    });
-  }
-
-  function resetAll() {
-    state.photoBase64 = ''; state.aiKeywords = ''; state.tone = '';
-    document.getElementById('previewImg').classList.add('hidden');
-    document.getElementById('uploadPlaceholder').classList.remove('hidden');
-    document.getElementById('uploadArea').classList.remove('has-image');
-    document.getElementById('changeBtn').classList.add('hidden');
-    document.getElementById('analyzingWrap').classList.add('hidden');
-    document.getElementById('aiResultWrap').classList.add('hidden');
-    document.getElementById('photoInput').value = '';
-    document.getElementById('next1').disabled = true;
-    document.getElementById('next2').disabled = true;
-    document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('selected'));
-
-    for (let i = 1; i <= 3; i++) {
-      const el = document.getElementById('step' + i);
-      if (!el) continue;
-      el.classList.remove('active','done');
-      el.querySelector('.step-dot').textContent = i === 3 ? '✓' : i;
-    }
-    document.getElementById('line1').classList.remove('done');
-    document.getElementById('line2').classList.remove('done');
-
-    goStep(1);
-    document.getElementById('step1').classList.add('active');
+    els.resultBlock.classList.remove('hidden');
   }
 
   function escapeHtml(str) {
-    return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
   }
-  function escapeTick(str) {
-    return (str||'').replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$');
+
+  function showError(msg) {
+    els.errorMsg.textContent = msg;
+    els.errorBlock.classList.remove('hidden');
   }
-  function getFallback() {
-    return [
-      { label:'버전 A', copy:`오늘의 한 잔\n.\n조용히 준비했어요\n.\n.\n.\n#카페 #카페스타그램 #오늘의카페 #감성카페 #로컬카페` },
-      { label:'버전 B', copy:`어제보다 조금 더 신경 썼다\n.\n오늘도\n.\n.\n.\n#카페 #카페스타그램 #카페일상 #카페추천 #감성카페` },
-      { label:'버전 C', copy:`준비됐어요\n.\n오늘 마감 전까지\n.\n.\n.\n#카페 #카페스타그램 #카페탐방 #오늘카페 #감성카페` }
-    ];
+
+  els.regenBtn.addEventListener('click', generateCopy);
+  els.retryBtn.addEventListener('click', generateCopy);
+
+  function restart() {
+    goToStep(1);
   }
+  els.restartBtn.addEventListener('click', restart);
+  els.errorRestartBtn.addEventListener('click', restart);
+
 </script>
 </body>
 </html>
