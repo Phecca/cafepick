@@ -277,6 +277,28 @@
     box-shadow: 0 0 0 2px rgba(217,98,43,0.18) inset;
   }
 
+  /* ---------- Learning badge ---------- */
+  .learn-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #eef0e6;
+    border: 1px solid rgba(111,125,82,0.25);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+    font-size: 12px;
+    color: var(--sage);
+    line-height: 1.5;
+  }
+  .learn-badge .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--sage);
+    flex-shrink: 0;
+  }
+  .learn-badge b { color: var(--espresso); }
+
   /* ---------- Receipt (step 3) ---------- */
   .receipt {
     font-family: 'Nanum Gothic Coding', monospace;
@@ -458,6 +480,11 @@
     <h1 class="title">오늘의 사진을 올려주세요</h1>
     <p class="desc">메뉴, 음료, 매장 공간 — 어떤 사진이든 좋아요.<br>AI가 사진을 보고 분위기를 분석할게요.</p>
 
+    <div class="learn-badge hidden" id="learnBadge">
+      <span class="dot"></span>
+      <span><b id="learnCount">0</b>개의 카피를 저장했어요 — 우리 카페 스타일을 점점 더 잘 반영해드려요</span>
+    </div>
+
     <div class="upload-zone" id="uploadZone">
       <span class="icon">📷</span>
       <div class="main-txt">사진 올리기</div>
@@ -555,6 +582,9 @@
   <footer>카페픽 · 감성 카페 인스타 AI</footer>
 
 <script>
+  const STORAGE_KEY = 'cafepick_liked_copies';
+  const MAX_STORED = 12; // 최대 저장 개수 (프롬프트 크기 제어)
+
   const state = {
     imageData: null,   // { base64, mediaType }
     mood: null
@@ -586,7 +616,45 @@
     restartBtn: document.getElementById('restartBtn'),
     retryBtn: document.getElementById('retryBtn'),
     errorRestartBtn: document.getElementById('errorRestartBtn'),
+    learnBadge: document.getElementById('learnBadge'),
+    learnCount: document.getElementById('learnCount'),
   };
+
+  // ---------- 피드백 누적 (localStorage) ----------
+  function getLikedCopies() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveLikedCopy(version, mood) {
+    const liked = getLikedCopies();
+    liked.push({
+      text: version.text,
+      tone: version.tone,
+      mood: mood,
+      savedAt: Date.now()
+    });
+    // 최신 N개만 유지 (오래된 것부터 제거)
+    while (liked.length > MAX_STORED) liked.shift();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(liked));
+    updateLearnBadge();
+  }
+
+  function updateLearnBadge() {
+    const liked = getLikedCopies();
+    if (liked.length > 0) {
+      els.learnBadge.classList.remove('hidden');
+      els.learnCount.textContent = liked.length;
+    } else {
+      els.learnBadge.classList.add('hidden');
+    }
+  }
+
+  updateLearnBadge();
 
   // ---------- 이미지 업로드 & 리사이즈 ----------
   els.uploadZone.addEventListener('click', () => els.fileInput.click());
@@ -680,6 +748,8 @@
     els.errorBlock.classList.add('hidden');
 
     try {
+      const likedCopies = getLikedCopies();
+
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -687,7 +757,8 @@
           image: state.imageData.base64,
           mediaType: state.imageData.mediaType,
           mood: state.mood,
-          seed: Math.random().toString(36).slice(2)
+          seed: Math.random().toString(36).slice(2),
+          likedCopies: likedCopies.slice(-6) // 최근 6개만 전송 (토큰 절약)
         })
       });
 
@@ -728,8 +799,9 @@
       copyBtn.addEventListener('click', () => {
         const fullText = `${v.text || ''}\n\n${tags}`;
         navigator.clipboard.writeText(fullText).then(() => {
-          copyBtn.textContent = '✓ 복사 완료';
+          copyBtn.textContent = '✓ 복사 완료 · 저장됨';
           copyBtn.classList.add('copied');
+          saveLikedCopy(v, state.mood);
           setTimeout(() => {
             copyBtn.textContent = '📋 복사하기';
             copyBtn.classList.remove('copied');
