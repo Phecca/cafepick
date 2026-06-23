@@ -790,13 +790,16 @@
   });
 
   // ---------- API 호출 ----------
-  async function generateCopy() {
+  async function generateCopy(isRegen) {
     els.loadingBlock.classList.remove('hidden');
     els.resultBlock.classList.add('hidden');
     els.errorBlock.classList.add('hidden');
 
     try {
       const likedCopies = getLikedCopies();
+      const excludeTexts = (isRegen === true && Array.isArray(state.lastVersions))
+        ? state.lastVersions.map(v => (v && v.text) ? v.text : '').filter(t => t.trim())
+        : [];
 
       const res = await fetch('/api/generate', {
         method: 'POST',
@@ -806,7 +809,8 @@
           mediaType: state.imageData.mediaType,
           mood: state.mood,
           seed: Math.random().toString(36).slice(2),
-          likedCopies: likedCopies.slice(-6) // 최근 6개만 전송 (토큰 절약)
+          likedCopies: likedCopies.slice(-6), // 최근 6개만 전송 (토큰 절약)
+          excludeTexts // '다시 만들기'일 때 직전 카피와 겹치지 않게
         })
       });
 
@@ -826,6 +830,7 @@
   }
 
   function renderResult(data) {
+    state.lastVersions = data.versions || [];
     els.receiptMeta.textContent = `사진 분석 완료 · ${state.mood}`;
     els.ticketsWrap.innerHTML = '';
 
@@ -874,8 +879,8 @@
     els.errorBlock.classList.remove('hidden');
   }
 
-  els.regenBtn.addEventListener('click', generateCopy);
-  els.retryBtn.addEventListener('click', generateCopy);
+  els.regenBtn.addEventListener('click', () => generateCopy(true));
+  els.retryBtn.addEventListener('click', () => generateCopy(false));
 
   function restart() {
     goToStep(1);
