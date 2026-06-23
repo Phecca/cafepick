@@ -502,46 +502,17 @@
     <button class="btn btn-primary" id="toStep2Btn" disabled>다음 — 분위기 선택</button>
   </div>
 
-  <!-- STEP 2 : 분위기 선택 -->
+  <!-- STEP 2 : 분류 → 세부 톤 (2단계) -->
   <div class="card hidden" id="step2">
     <div class="eyebrow">STEP 2</div>
-    <h1 class="title">오늘은 어떤 분위기로 쓸까요?</h1>
-    <p class="desc">고른 분위기에 맞춰 카피 3가지를 만들어드려요.</p>
+    <h1 class="title" id="step2Title">어떤 스타일로 쓸까요?</h1>
+    <p class="desc" id="step2Desc">먼저 큰 분위기를 골라주세요.</p>
 
-    <div class="mood-grid" id="moodGrid">
-      <div class="mood-chip" data-mood="잔잔하게">
-        <span class="emoji">🌙</span>
-        <div class="name">잔잔하게</div>
-        <div class="sub">조용하고 차분한 톤</div>
-      </div>
-      <div class="mood-chip" data-mood="활기차게">
-        <span class="emoji">☀️</span>
-        <div class="name">활기차게</div>
-        <div class="sub">밝고 신나는 톤</div>
-      </div>
-      <div class="mood-chip" data-mood="담백하게">
-        <span class="emoji">🤍</span>
-        <div class="name">담백하게</div>
-        <div class="sub">짧고 깔끔한 톤</div>
-      </div>
-      <div class="mood-chip" data-mood="감성적으로">
-        <span class="emoji">🍂</span>
-        <div class="name">감성적으로</div>
-        <div class="sub">사색적인 톤</div>
-      </div>
-      <div class="mood-chip" data-mood="친근하게">
-        <span class="emoji">🧡</span>
-        <div class="name">친근하게</div>
-        <div class="sub">다정한 반말 톤</div>
-      </div>
-      <div class="mood-chip" data-mood="고급스럽게">
-        <span class="emoji">✨</span>
-        <div class="name">고급스럽게</div>
-        <div class="sub">정중한 존댓말 톤</div>
-      </div>
-    </div>
+    <div class="mood-grid" id="categoryGrid"></div>
+    <div class="mood-grid hidden" id="toneGrid"></div>
 
-    <button class="btn btn-primary" id="toStep3Btn" disabled>카피 만들기</button>
+    <button class="btn btn-primary hidden" id="toStep3Btn" disabled>카피 만들기</button>
+    <button class="btn btn-ghost hidden" id="backToCategoryBtn">← 분류 다시 선택</button>
     <button class="btn btn-ghost" id="backToStep1Btn">← 사진 다시 선택</button>
   </div>
 
@@ -587,8 +558,38 @@
 
   const state = {
     imageData: null,   // { base64, mediaType }
+    category: null,
     mood: null
   };
+
+  // ---------- 분위기 분류 → 세부 톤 (2단계) ----------
+  const TONE_GROUPS = [
+    {
+      key: 'classic', label: '클래식', emoji: '☕', desc: '무난하고 안정적인 톤',
+      tones: [
+        { mood: '잔잔하게', emoji: '🌙', sub: '조용하고 차분하게' },
+        { mood: '담백하게', emoji: '🤍', sub: '짧고 깔끔하게' },
+        { mood: '고급지게', emoji: '✨', sub: '정중한 프리미엄 톤' },
+      ],
+    },
+    {
+      key: 'mz', label: '요즘감성', emoji: '🔥', desc: 'MZ·트렌디하게',
+      tones: [
+        { mood: '힙하게', emoji: '🧢', sub: '성수·브루클린 감성' },
+        { mood: '시크하게', emoji: '🖤', sub: '꾸안꾸·미니멀' },
+        { mood: '인증샷용', emoji: '📸', sub: '사진 맛집 포토존' },
+        { mood: '제철감 있게', emoji: '🍑', sub: '지금 아니면 못 먹어' },
+      ],
+    },
+    {
+      key: 'wit', label: '위트', emoji: '😏', desc: '재미·드립 섞어서',
+      tones: [
+        { mood: '친근하게', emoji: '🧡', sub: '다정한 반말 톤' },
+        { mood: '발랄하게', emoji: '☀️', sub: '밝고 신나게' },
+        { mood: '드립있게', emoji: '😏', sub: '위트·밈 살짝' },
+      ],
+    },
+  ];
 
   const els = {
     uploadZone: document.getElementById('uploadZone'),
@@ -599,7 +600,11 @@
     toStep2Btn: document.getElementById('toStep2Btn'),
     toStep3Btn: document.getElementById('toStep3Btn'),
     backToStep1Btn: document.getElementById('backToStep1Btn'),
-    moodGrid: document.getElementById('moodGrid'),
+    backToCategoryBtn: document.getElementById('backToCategoryBtn'),
+    categoryGrid: document.getElementById('categoryGrid'),
+    toneGrid: document.getElementById('toneGrid'),
+    step2Title: document.getElementById('step2Title'),
+    step2Desc: document.getElementById('step2Desc'),
     step1: document.getElementById('step1'),
     step2: document.getElementById('step2'),
     step3: document.getElementById('step3'),
@@ -723,18 +728,61 @@
     });
   }
 
-  els.toStep2Btn.addEventListener('click', () => goToStep(2));
+  els.toStep2Btn.addEventListener('click', () => { goToStep(2); showCategories(); });
   els.backToStep1Btn.addEventListener('click', () => goToStep(1));
 
-  // ---------- 분위기 선택 ----------
-  els.moodGrid.addEventListener('click', (e) => {
-    const chip = e.target.closest('.mood-chip');
-    if (!chip) return;
-    document.querySelectorAll('.mood-chip').forEach(c => c.classList.remove('selected'));
-    chip.classList.add('selected');
-    state.mood = chip.dataset.mood;
-    els.toStep3Btn.disabled = false;
-  });
+  // ---------- 분위기 선택 (2단계) ----------
+  function showCategories() {
+    state.category = null;
+    state.mood = null;
+    els.step2Title.textContent = '어떤 스타일로 쓸까요?';
+    els.step2Desc.textContent = '먼저 큰 분위기를 골라주세요.';
+    els.categoryGrid.classList.remove('hidden');
+    els.toneGrid.classList.add('hidden');
+    els.toStep3Btn.classList.add('hidden');
+    els.toStep3Btn.disabled = true;
+    els.backToCategoryBtn.classList.add('hidden');
+
+    els.categoryGrid.innerHTML = '';
+    TONE_GROUPS.forEach(g => {
+      const chip = document.createElement('div');
+      chip.className = 'mood-chip';
+      chip.innerHTML = `<span class="emoji">${g.emoji}</span><div class="name">${g.label}</div><div class="sub">${g.desc}</div>`;
+      chip.addEventListener('click', () => showTones(g.key));
+      els.categoryGrid.appendChild(chip);
+    });
+  }
+
+  function showTones(key) {
+    state.category = key;
+    state.mood = null;
+    const group = TONE_GROUPS.find(g => g.key === key);
+    if (!group) return;
+
+    els.step2Title.textContent = '세부 톤을 골라주세요';
+    els.step2Desc.textContent = '고른 톤에 맞춰 카피 3가지를 만들어드려요.';
+    els.categoryGrid.classList.add('hidden');
+    els.toneGrid.classList.remove('hidden');
+    els.toStep3Btn.classList.remove('hidden');
+    els.toStep3Btn.disabled = true;
+    els.backToCategoryBtn.classList.remove('hidden');
+
+    els.toneGrid.innerHTML = '';
+    group.tones.forEach(t => {
+      const chip = document.createElement('div');
+      chip.className = 'mood-chip';
+      chip.innerHTML = `<span class="emoji">${t.emoji}</span><div class="name">${t.mood}</div><div class="sub">${t.sub}</div>`;
+      chip.addEventListener('click', () => {
+        els.toneGrid.querySelectorAll('.mood-chip').forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+        state.mood = t.mood;
+        els.toStep3Btn.disabled = false;
+      });
+      els.toneGrid.appendChild(chip);
+    });
+  }
+
+  els.backToCategoryBtn.addEventListener('click', showCategories);
 
   els.toStep3Btn.addEventListener('click', () => {
     goToStep(3);
