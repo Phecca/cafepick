@@ -115,7 +115,7 @@ export default async function handler(req, res) {
     });
   }
 
-  const { image, mediaType, mood, seed, likedCopies, cafeProfile } = req.body || {};
+  const { image, mediaType, mood, seed, likedCopies, cafeProfile, excludeTexts } = req.body || {};
   if (!image || !mediaType || !mood) {
     return res.status(400).json({ error: '사진 또는 분위기 정보가 누락되었어요.' });
   }
@@ -161,6 +161,27 @@ ${examples}
   const bannedList = BANNED.map(w => `"${w}"`).join(', ');
   const toneHint = TONE_HINTS[mood] ? `\n(톤 가이드: ${TONE_HINTS[mood]})` : '';
 
+  // ---------- '다시 만들기' 다양화: 직전 카피와 겹치지 않게 ----------
+  let avoidBlock = '';
+  if (Array.isArray(excludeTexts) && excludeTexts.length > 0) {
+    const prev = excludeTexts
+      .filter(t => typeof t === 'string' && t.trim())
+      .slice(-9)
+      .map((t, i) => `${i + 1}) ${t}`)
+      .join('\n');
+    if (prev) {
+      avoidBlock = `
+[★ 다시 만들기 — 이전과 확실히 다르게 ★]
+아래는 방금 전에 만든 카피들이야. 이번엔 이것들과 '확실히' 다르게 써:
+${prev}
+
+- 위 카피에서 쓴 첫 줄·키워드·문장 구조·표현을 재사용하지 마.
+- 같은 사진이라도 '다른 디테일·다른 각도'를 잡아서 새로 써. (이전이 '뷰'였다면 이번엔 '메뉴·분위기·디테일' 등)
+- 표현이 비슷하면 실패다. 읽는 사람이 "오 이건 또 다르네" 싶게.
+`;
+    }
+  }
+
   const prompt = `너는 한국 개인 카페의 인스타그램을 직접 운영하는 사장님 본인이야. 대행사도 챗봇도 아니야.
 첨부된 사진은 이 카페의 메뉴/음료/공간 사진이야.
 
@@ -186,6 +207,7 @@ ${HUMAN_VOICE_RULES}
 ${AI_TELLS}
 ${HUMAN_EXAMPLES}
 ${styleMemoryBlock}
+${avoidBlock}
 
 [규칙 충돌 시 우선순위 — 매우 중요]
 위 규칙들이 서로 부딪히면, 항상 '진짜 사람이 쓴 것 같은 자연스러움'이 이긴다.
