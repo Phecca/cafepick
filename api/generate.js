@@ -115,7 +115,7 @@ export default async function handler(req, res) {
     });
   }
 
-  const { image, mediaType, mood, seed, likedCopies, cafeProfile, excludeTexts } = req.body || {};
+  const { image, mediaType, mood, seed, likedCopies, cafeProfile, excludeTexts, refineHints, refineNote } = req.body || {};
   if (!image || !mediaType || !mood) {
     return res.status(400).json({ error: '사진 또는 분위기 정보가 누락되었어요.' });
   }
@@ -182,6 +182,28 @@ ${prev}
     }
   }
 
+  // ---------- 수정 방향 (칩 선택 + 직접 입력) ----------
+  let refineBlock = '';
+  const HINT_MAP = {
+    shorter: '더 짧게. 한 줄~두 줄로 확 줄여라. 군더더기 다 빼고 핵심만.',
+    witty: '더 위트있게. 웃음 포인트나 공감/댓글 유발 요소를 강하게.',
+    fresh: '완전 다른 느낌으로. 톤·구조·접근을 싹 바꿔서 아예 새로 쓴 것처럼.',
+    keyword: '사진 속 다른 디테일을 키워드로 잡아라. 이전과 다른 포인트를 강조.',
+  };
+  const hintLines = [];
+  if (Array.isArray(refineHints)) {
+    refineHints.forEach(h => { if (HINT_MAP[h]) hintLines.push(`- ${HINT_MAP[h]}`); });
+  }
+  const note = (typeof refineNote === 'string') ? refineNote.trim().slice(0, 200) : '';
+  if (note) hintLines.push(`- 사용자 요청(최우선 반영): "${note}"`);
+  if (hintLines.length > 0) {
+    refineBlock = `
+[★ 이번엔 이 방향으로 고쳐서 다시 써 ★]
+${hintLines.join('\n')}
+위 방향을 세 버전 모두에 반영해라. 특히 사용자가 직접 쓴 요청이 있으면 그게 1순위다.
+`;
+  }
+
   const prompt = `너는 한국 개인 카페의 인스타그램을 직접 운영하는 사장님 본인이야. 대행사도 챗봇도 아니야.
 첨부된 사진은 이 카페의 메뉴/음료/공간 사진이야.
 
@@ -208,6 +230,7 @@ ${AI_TELLS}
 ${HUMAN_EXAMPLES}
 ${styleMemoryBlock}
 ${avoidBlock}
+${refineBlock}
 
 [규칙 충돌 시 우선순위 — 매우 중요]
 위 규칙들이 서로 부딪히면, 항상 '진짜 사람이 쓴 것 같은 자연스러움'이 이긴다.
