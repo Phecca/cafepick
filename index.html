@@ -252,6 +252,31 @@
   }
   .btn-ghost:hover { border-color: var(--stamp); color: var(--stamp-dark); }
 
+  /* ---------- Refine box (다시 만들기 방향) ---------- */
+  .refine-box {
+    margin-top: 18px;
+    padding: 14px;
+    border: 1.5px dashed var(--paper-line);
+    border-radius: 14px;
+    background: rgba(0,0,0,0.015);
+  }
+  .refine-title { font-size: 13px; font-weight: 700; color: var(--ink-soft); margin-bottom: 10px; }
+  .refine-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .chip {
+    padding: 8px 14px; border-radius: 999px; cursor: pointer;
+    border: 1.5px solid var(--paper-line); background: var(--paper);
+    font-size: 13px; font-weight: 600; color: var(--ink); transition: all .15s;
+  }
+  .chip:hover { border-color: var(--stamp); }
+  .chip.selected { background: var(--stamp); color: #fff; border-color: var(--stamp); }
+  .refine-note {
+    width: 100%; box-sizing: border-box; padding: 11px 13px;
+    border: 1.5px solid var(--paper-line); border-radius: 10px;
+    font-size: 14px; font-family: inherit; color: var(--ink); background: var(--paper);
+  }
+  .refine-note:focus { outline: none; border-color: var(--stamp); }
+  .refine-note::placeholder { color: var(--ink-soft); }
+
   /* ---------- Mood chips (step 2) ---------- */
   .mood-grid {
     display: grid;
@@ -535,6 +560,18 @@
         <div class="receipt-foot">✂ 마음에 드는 카피를 복사해서 쓰세요</div>
       </div>
 
+      <div class="refine-box">
+        <div class="refine-title">✏️ 다시 만들 때 방향 (선택)</div>
+        <div class="refine-chips">
+          <button type="button" class="chip" data-hint="shorter">더 짧게</button>
+          <button type="button" class="chip" data-hint="witty">더 위트있게</button>
+          <button type="button" class="chip" data-hint="fresh">완전 다른 느낌으로</button>
+          <button type="button" class="chip" data-hint="keyword">키워드 바꿔서</button>
+        </div>
+        <input type="text" id="refineNote" class="refine-note" maxlength="200"
+          placeholder="예: 계절감 살려서 / 신메뉴 강조 / 짧게 한 줄로" />
+      </div>
+
       <button class="btn btn-primary" id="regenBtn">다시 만들기</button>
       <button class="btn btn-ghost" id="restartBtn">처음으로</button>
     </div>
@@ -559,7 +596,8 @@
   const state = {
     imageData: null,   // { base64, mediaType }
     category: null,
-    mood: null
+    mood: null,
+    refineHints: new Set() // 다시 만들기 수정 방향 칩
   };
 
   // ---------- 분위기 분류 → 세부 톤 (2단계) ----------
@@ -619,6 +657,7 @@
     receiptMeta: document.getElementById('receiptMeta'),
     regenBtn: document.getElementById('regenBtn'),
     restartBtn: document.getElementById('restartBtn'),
+    refineNote: document.getElementById('refineNote'),
     retryBtn: document.getElementById('retryBtn'),
     errorRestartBtn: document.getElementById('errorRestartBtn'),
     learnBadge: document.getElementById('learnBadge'),
@@ -800,6 +839,9 @@
       const excludeTexts = (isRegen === true && Array.isArray(state.lastVersions))
         ? state.lastVersions.map(v => (v && v.text) ? v.text : '').filter(t => t.trim())
         : [];
+      // 다시 만들기일 때만 수정 방향(칩 + 직접 입력) 전송
+      const refineHints = (isRegen === true) ? Array.from(state.refineHints || []) : [];
+      const refineNote = (isRegen === true && els.refineNote) ? els.refineNote.value.trim() : '';
 
       const res = await fetch('/api/generate', {
         method: 'POST',
@@ -810,7 +852,9 @@
           mood: state.mood,
           seed: Math.random().toString(36).slice(2),
           likedCopies: likedCopies.slice(-6), // 최근 6개만 전송 (토큰 절약)
-          excludeTexts // '다시 만들기'일 때 직전 카피와 겹치지 않게
+          excludeTexts, // '다시 만들기'일 때 직전 카피와 겹치지 않게
+          refineHints, // 수정 방향 칩
+          refineNote   // 직접 입력 방향
         })
       });
 
@@ -879,10 +923,31 @@
     els.errorBlock.classList.remove('hidden');
   }
 
+  // ---------- 수정 방향 칩 토글 ----------
+  document.querySelectorAll('.refine-chips .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const hint = chip.dataset.hint;
+      if (state.refineHints.has(hint)) {
+        state.refineHints.delete(hint);
+        chip.classList.remove('selected');
+      } else {
+        state.refineHints.add(hint);
+        chip.classList.add('selected');
+      }
+    });
+  });
+
+  function clearRefine() {
+    state.refineHints.clear();
+    document.querySelectorAll('.refine-chips .chip').forEach(c => c.classList.remove('selected'));
+    if (els.refineNote) els.refineNote.value = '';
+  }
+
   els.regenBtn.addEventListener('click', () => generateCopy(true));
   els.retryBtn.addEventListener('click', () => generateCopy(false));
 
   function restart() {
+    clearRefine();
     goToStep(1);
   }
   els.restartBtn.addEventListener('click', restart);
